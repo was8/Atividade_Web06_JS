@@ -102,7 +102,7 @@ function update() {
     else if (ball.y + ball.height >= boardHeight) {
         // if ball touches bottom of canvas
         context.font = "20px sans-serif";
-        context.fillText("Game Over: Press 'Space' to Restart", 80, 400);
+        context.fillText("Fim do jogo: Aperte 'espaço' para reiniciar", 80, 400);
         gameOver = true;
     }
 
