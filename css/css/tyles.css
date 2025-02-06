@@ -1,12 +1,12 @@
 body {
-    text-align: center;
+  text-align: center;
 }
 
 #board {
-    background-color: black;
-    border-top: 5px solid skyblue;
-    border-left: 5px solid skyblue;
-    border-right: 5px solid skyblue;
-    display: block;
-    margin: 20px auto; /* centraliza o canvas na página */
+  background-color: black;
+  border-top: 5px solid skyblue;
+  border-left: 5px solid skyblue;
+  border-right: 5px solid skyblue;
+  display: block;
+  margin: 20px auto; /* centraliza o canvas na página */
 }

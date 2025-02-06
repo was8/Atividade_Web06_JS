@@ -1,231 +1,228 @@
-//board
-let board;
-let boardWidth = 500;
-let boardHeight = 500;
-let context; 
+// Tabuleiro
+let tabuleiro;
+let larguraTabuleiro = 500;
+let alturaTabuleiro = 500;
+let contexto; 
 
-//players
-let playerWidth = 80; //500 for testing, 80 normal
-let playerHeight = 10;
-let playerVelocityX = 10; //move 10 pixels each time
+// Jogador
+let larguraJogador = 80; // 500 para testes, 80 normal
+let alturaJogador = 10;
+let velocidadeJogadorX = 10; // move 10 pixels a cada vez
 
-let player = {
-    x : boardWidth/2 - playerWidth/2,
-    y : boardHeight - playerHeight - 5,
-    width: playerWidth,
-    height: playerHeight,
-    velocityX : playerVelocityX
+let jogador = {
+    x: larguraTabuleiro / 2 - larguraJogador / 2,
+    y: alturaTabuleiro - alturaJogador - 5,
+    largura: larguraJogador,
+    altura: alturaJogador,
+    velocidadeX: velocidadeJogadorX
 }
 
-//ball
-let ballWidth = 10;
-let ballHeight = 10;
-let ballVelocityX = 3; //15 for testing, 3 normal
-let ballVelocityY = 2; //10 for testing, 2 normal
+// Bola
+let larguraBola = 10;
+let alturaBola = 10;
+let velocidadeBolaX = 3; // 15 para testes, 3 normal
+let velocidadeBolaY = 2; // 10 para testes, 2 normal
 
-let ball = {
-    x : boardWidth/2,
-    y : boardHeight/2,
-    width: ballWidth,
-    height: ballHeight,
-    velocityX : ballVelocityX,
-    velocityY : ballVelocityY
+let bola = {
+    x: larguraTabuleiro / 2,
+    y: alturaTabuleiro / 2,
+    largura: larguraBola,
+    altura: alturaBola,
+    velocidadeX: velocidadeBolaX,
+    velocidadeY: velocidadeBolaY
 }
 
-//blocks
-let blockArray = [];
-let blockWidth = 50;
-let blockHeight = 10;
-let blockColumns = 8; 
-let blockRows = 3; //add more as game goes on
-let blockMaxRows = 10; //limit how many rows
-let blockCount = 0;
+// Blocos
+let blocos = [];
+let larguraBloco = 50;
+let alturaBloco = 10;
+let colunasBloco = 8; 
+let linhasBloco = 3; // adiciona mais conforme o jogo avança
+let maxLinhasBloco = 10; // limite de linhas
+let contagemBloco = 0;
 
-//starting block corners top left 
-let blockX = 15;
-let blockY = 45;
+// Posição inicial do bloco (canto superior esquerdo)
+let posicaoXBloco = 15;
+let posicaoYBloco = 45;
 
-let score = 0;
-let gameOver = false;
+let pontuacao = 0;
+let jogoTerminado = false;
 
 window.onload = function() {
-    board = document.getElementById("board");
-    board.height = boardHeight;
-    board.width = boardWidth;
-    context = board.getContext("2d"); //used for drawing on the board
+    tabuleiro = document.getElementById("board");
+    tabuleiro.height = alturaTabuleiro;
+    tabuleiro.width = larguraTabuleiro;
+    contexto = tabuleiro.getContext("2d"); // utilizado para desenhar no tabuleiro
 
-    //draw initial player
-    context.fillStyle="skyblue";
-    context.fillRect(player.x, player.y, player.width, player.height);
+    // Desenha o jogador inicial
+    contexto.fillStyle = "skyblue";
+    contexto.fillRect(jogador.x, jogador.y, jogador.largura, jogador.altura);
 
-    requestAnimationFrame(update);
-    document.addEventListener("keydown", movePlayer);
+    requestAnimationFrame(atualizar);
+    document.addEventListener("keydown", moverJogador);
 
-    //create blocks
-    createBlocks();
+    // Cria os blocos
+    criarBlocos();
 }
 
-function update() {
-    requestAnimationFrame(update);
-    //stop drawing
-    if (gameOver) {
+function atualizar() {
+    requestAnimationFrame(atualizar);
+    // Para de desenhar se o jogo terminou
+    if (jogoTerminado) {
         return;
     }
-    context.clearRect(0, 0, board.width, board.height);
+    contexto.clearRect(0, 0, tabuleiro.width, tabuleiro.height);
 
-    // player
-    context.fillStyle = "lightgreen";
-    context.fillRect(player.x, player.y, player.width, player.height);
+    // Desenha o Jogador
+    contexto.fillStyle = "lightgreen";
+    contexto.fillRect(jogador.x, jogador.y, jogador.largura, jogador.altura);
 
-    // ball
-    context.fillStyle = "white";
-    ball.x += ball.velocityX;
-    ball.y += ball.velocityY;
-    context.fillRect(ball.x, ball.y, ball.width, ball.height);
+    // Atualiza e desenha a Bola
+    contexto.fillStyle = "white";
+    bola.x += bola.velocidadeX;
+    bola.y += bola.velocidadeY;
+    contexto.fillRect(bola.x, bola.y, bola.largura, bola.altura);
 
-    //bounce the ball off player paddle
-    if (topCollision(ball, player) || bottomCollision(ball, player)) {
-        ball.velocityY *= -1;   // flip y direction up or down
-    }
-    else if (leftCollision(ball, player) || rightCollision(ball, player)) {
-        ball.velocityX *= -1;   // flip x direction left or right
-    }
-
-    if (ball.y <= 0) { 
-        // if ball touches top of canvas
-        ball.velocityY *= -1; //reverse direction
-    }
-    else if (ball.x <= 0 || (ball.x + ball.width >= boardWidth)) {
-        // if ball touches left or right of canvas
-        ball.velocityX *= -1; //reverse direction
-    }
-    else if (ball.y + ball.height >= boardHeight) {
-        // if ball touches bottom of canvas
-        context.font = "20px sans-serif";
-        context.fillText("Game Over: Press 'Space' to Restart", 80, 400);
-        gameOver = true;
+    // Rebater a bola na raquete do jogador
+    if (colisaoSuperior(bola, jogador) || colisaoInferior(bola, jogador)) {
+        bola.velocidadeY *= -1;   // inverte a direção vertical
+    } else if (colisaoEsquerda(bola, jogador) || colisaoDireita(bola, jogador)) {
+        bola.velocidadeX *= -1;   // inverte a direção horizontal
     }
 
-    //blocks
-    context.fillStyle = "skyblue";
-    for (let i = 0; i < blockArray.length; i++) {
-        let block = blockArray[i];
-        if (!block.break) {
-            if (topCollision(ball, block) || bottomCollision(ball, block)) {
-                block.break = true;     // block is broken
-                ball.velocityY *= -1;   // flip y direction up or down
-                score += 100;
-                blockCount -= 1;
+    if (bola.y <= 0) { 
+        // Se a bola tocar o topo do canvas
+        bola.velocidadeY *= -1;
+    } else if (bola.x <= 0 || (bola.x + bola.largura >= larguraTabuleiro)) {
+        // Se a bola tocar as laterais do canvas
+        bola.velocidadeX *= -1;
+    } else if (bola.y + bola.altura >= alturaTabuleiro) {
+        // Se a bola tocar a parte inferior do canvas
+        contexto.font = "20px sans-serif";
+        contexto.fillText("Game Over: Pressione 'Space' para Reiniciar", 80, 400);
+        jogoTerminado = true;
+    }
+
+    // Processa os Blocos
+    contexto.fillStyle = "skyblue";
+    for (let i = 0; i < blocos.length; i++) {
+        let bloco = blocos[i];
+        if (!bloco.quebrado) {
+            if (colisaoSuperior(bola, bloco) || colisaoInferior(bola, bloco)) {
+                bloco.quebrado = true;     // bloco é destruído
+                bola.velocidadeY *= -1;     // inverte a direção vertical
+                pontuacao += 100;
+                contagemBloco -= 1;
+            } else if (colisaoEsquerda(bola, bloco) || colisaoDireita(bola, bloco)) {
+                bloco.quebrado = true;     // bloco é destruído
+                bola.velocidadeX *= -1;     // inverte a direção horizontal
+                pontuacao += 100;
+                contagemBloco -= 1;
             }
-            else if (leftCollision(ball, block) || rightCollision(ball, block)) {
-                block.break = true;     // block is broken
-                ball.velocityX *= -1;   // flip x direction left or right
-                score += 100;
-                blockCount -= 1;
-            }
-            context.fillRect(block.x, block.y, block.width, block.height);
+            contexto.fillRect(bloco.x, bloco.y, bloco.largura, bloco.altura);
         }
     }
 
-    //next level
-    if (blockCount == 0) {
-        score += 100*blockRows*blockColumns; //bonus points :)
-        blockRows = Math.min(blockRows + 1, blockMaxRows);
-        createBlocks();
+    // Próximo nível se todos os blocos forem destruídos
+    if (contagemBloco === 0) {
+        pontuacao += 100 * linhasBloco * colunasBloco; // pontos bônus
+        linhasBloco = Math.min(linhasBloco + 1, maxLinhasBloco);
+        criarBlocos();
     }
 
-    //score
-    context.font = "20px sans-serif";
-    context.fillText(score, 10, 25);
+    // Exibe a pontuação
+    contexto.font = "20px sans-serif";
+    contexto.fillText(pontuacao, 10, 25);
 }
 
-function outOfBounds(xPosition) {
-    return (xPosition < 0 || xPosition + playerWidth > boardWidth);
+function foraDosLimites(posicaoX) {
+    return (posicaoX < 0 || posicaoX + larguraJogador > larguraTabuleiro);
 }
 
-function movePlayer(e) {
-    if (gameOver) {
-        if (e.code == "Space") {
-            resetGame();
-            console.log("RESET");
+function moverJogador(e) {
+    if (jogoTerminado) {
+        if (e.code === "Space") {
+            reiniciarJogo();
+            console.log("REINICIAR");
         }
         return;
     }
-    if (e.code == "ArrowLeft") {
-        // player.x -= player.velocityX;
-        let nextplayerX = player.x - player.velocityX;
-        if (!outOfBounds(nextplayerX)) {
-            player.x = nextplayerX;
+    if (e.code === "ArrowLeft") {
+        let proximoX = jogador.x - jogador.velocidadeX;
+        if (!foraDosLimites(proximoX)) {
+            jogador.x = proximoX;
+        }
+    } else if (e.code === "ArrowRight") {
+        let proximoX = jogador.x + jogador.velocidadeX;
+        if (!foraDosLimites(proximoX)) {
+            jogador.x = proximoX;
         }
     }
-    else if (e.code == "ArrowRight") {
-        let nextplayerX = player.x + player.velocityX;
-        if (!outOfBounds(nextplayerX)) {
-            player.x = nextplayerX;
-        }
-        // player.x += player.velocityX;    
-    }
 }
 
-function detectCollision(a, b) {
-    return a.x < b.x + b.width &&   //a's top left corner doesn't reach b's top right corner
-           a.x + a.width > b.x &&   //a's top right corner passes b's top left corner
-           a.y < b.y + b.height &&  //a's top left corner doesn't reach b's bottom left corner
-           a.y + a.height > b.y;    //a's bottom left corner passes b's top left corner
+function detectarColisao(a, b) {
+    return a.x < b.x + b.largura &&   // o canto superior esquerdo de "a" não alcança o canto superior direito de "b"
+           a.x + a.largura > b.x &&     // o canto superior direito de "a" ultrapassa o canto superior esquerdo de "b"
+           a.y < b.y + b.altura &&      // o canto superior esquerdo de "a" não alcança o canto inferior esquerdo de "b"
+           a.y + a.altura > b.y;        // o canto inferior esquerdo de "a" ultrapassa o canto superior esquerdo de "b"
 }
 
-function topCollision(ball, block) { //a is above b (ball is above block)
-    return detectCollision(ball, block) && (ball.y + ball.height) >= block.y;
+function colisaoSuperior(bola, objeto) {
+    // Retorna true se a bola estiver colidindo na parte superior do objeto
+    return detectarColisao(bola, objeto) && (bola.y + bola.altura) >= objeto.y;
 }
 
-function bottomCollision(ball, block) { //a is above b (ball is below block)
-    return detectCollision(ball, block) && (block.y + block.height) >= ball.y;
+function colisaoInferior(bola, objeto) {
+    // Retorna true se a bola estiver colidindo na parte inferior do objeto
+    return detectarColisao(bola, objeto) && (objeto.y + objeto.altura) >= bola.y;
 }
 
-function leftCollision(ball, block) { //a is left of b (ball is left of block)
-    return detectCollision(ball, block) && (ball.x + ball.width) >= block.x;
+function colisaoEsquerda(bola, objeto) {
+    // Retorna true se a bola estiver colidindo pelo lado esquerdo do objeto
+    return detectarColisao(bola, objeto) && (bola.x + bola.largura) >= objeto.x;
 }
 
-function rightCollision(ball, block) { //a is right of b (ball is right of block)
-    return detectCollision(ball, block) && (block.x + block.width) >= ball.x;
+function colisaoDireita(bola, objeto) {
+    // Retorna true se a bola estiver colidindo pelo lado direito do objeto
+    return detectarColisao(bola, objeto) && (objeto.x + objeto.largura) >= bola.x;
 }
 
-function createBlocks() {
-    blockArray = []; //clear blockArray
-    for (let c = 0; c < blockColumns; c++) {
-        for (let r = 0; r < blockRows; r++) {
-            let block = {
-                x : blockX + c*blockWidth + c*10, //c*10 space 10 pixels apart columns
-                y : blockY + r*blockHeight + r*10, //r*10 space 10 pixels apart rows
-                width : blockWidth,
-                height : blockHeight,
-                break : false
+function criarBlocos() {
+    blocos = []; // limpa o array de blocos
+    for (let c = 0; c < colunasBloco; c++) {
+        for (let r = 0; r < linhasBloco; r++) {
+            let bloco = {
+                x: posicaoXBloco + c * larguraBloco + c * 10, // espaçamento de 10px entre colunas
+                y: posicaoYBloco + r * alturaBloco + r * 10,   // espaçamento de 10px entre linhas
+                largura: larguraBloco,
+                altura: alturaBloco,
+                quebrado: false
             }
-            blockArray.push(block);
+            blocos.push(bloco);
         }
     }
-    blockCount = blockArray.length;
+    contagemBloco = blocos.length;
 }
 
-function resetGame() {
-    gameOver = false;
-    player = {
-        x : boardWidth/2 - playerWidth/2,
-        y : boardHeight - playerHeight - 5,
-        width: playerWidth,
-        height: playerHeight,
-        velocityX : playerVelocityX
+function reiniciarJogo() {
+    jogoTerminado = false;
+    jogador = {
+        x: larguraTabuleiro / 2 - larguraJogador / 2,
+        y: alturaTabuleiro - alturaJogador - 5,
+        largura: larguraJogador,
+        altura: alturaJogador,
+        velocidadeX: velocidadeJogadorX
     }
-    ball = {
-        x : boardWidth/2,
-        y : boardHeight/2,
-        width: ballWidth,
-        height: ballHeight,
-        velocityX : ballVelocityX,
-        velocityY : ballVelocityY
+    bola = {
+        x: larguraTabuleiro / 2,
+        y: alturaTabuleiro / 2,
+        largura: larguraBola,
+        altura: alturaBola,
+        velocidadeX: velocidadeBolaX,
+        velocidadeY: velocidadeBolaY
     }
-    blockArray = [];
-    blockRows = 3;
-    score = 0;
-    createBlocks();
+    blocos = [];
+    linhasBloco = 3;
+    pontuacao = 0;
+    criarBlocos();
 }
